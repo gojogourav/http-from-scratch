@@ -1,0 +1,10 @@
+TCP listening at 42069New client connected: [::1]:48770
+Received: POST /coffee HTTP/1.1
+Received: Host: localhost:42069
+Received: User-Agent: curl/8.11.1
+Received: Accept: */*
+Received: Content-Type: application/json
+Received: Content-Length: 22
+Received: 
+Received: {"flavor":"dark mode"}
+Client disconnected: [::1]:48770
