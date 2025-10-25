@@ -65,6 +65,7 @@ func (r *Request) parseRequestLine(data []byte) (int, *RequestLine, error) {
 	}
 
 	line := string(data[:lineEnd])
+	println(line)
 	parts := strings.Split(line, " ")
 	if len(parts) != 3 {
 		return 0, nil, ErrMalformedRequestLine
@@ -114,7 +115,7 @@ func (r *Request) parseRequestLine(data []byte) (int, *RequestLine, error) {
 func (r *Request) parse(data []byte) (int, error) {
 	consumed := 0
 	for r.state != StateDone {
-		if consumed >= len(data) {
+		if consumed > len(data) {
 			break
 		}
 
@@ -136,10 +137,10 @@ func (r *Request) parse(data []byte) (int, error) {
 			if consumedInStep > 0 {
 				r.RequestLine = *rl
 				r.state = StateHeaders
-				// consumed += consumedInStep
+				consumed += consumedInStep
 				fmt.Println("EOF ENCOUNTERED?1")
 
-				break
+				continue
 			} //if consumed is 0 then it'll break
 
 		case StateHeaders:
@@ -175,14 +176,14 @@ func (r *Request) parse(data []byte) (int, error) {
 
 			if err != nil {
 				println("Error idhar arha hai kyaa")
-
+				println(string(workingData[consumed:]))
 				return 0, err
 			}
 			consumedInStep = n
 			if done {
 				r.state = StateBody
 			}
-			fmt.Println("EOF ENCOUNTERED?2")
+			fmt.Println("EOF ENCOUNTERED?2 ", consumed+consumedInStep)
 			break
 
 		case StateBody:
@@ -224,8 +225,11 @@ func (r *Request) parse(data []byte) (int, error) {
 			break
 		}
 		consumed += consumedInStep
+		println("This is consumed - ", consumed)
 
 	}
+	println("This is consumed - wgdaas;glkajsd", consumed)
+
 	return consumed, nil
 }
 
@@ -244,6 +248,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		// 	return nil, err
 		// }
 		consumed, parseErr := req.parse(buf)
+
 		if parseErr != nil {
 			return nil, parseErr
 		}
@@ -258,7 +263,8 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		if readErr != nil {
 			if readErr == io.EOF {
 				if req.state != StateDone {
-					fmt.Printf("kya mujhe eor error arha hai?  \n ")
+
+					fmt.Printf("kya mujhe eor error arha hai?  %d\n ", consumed)
 					return nil, io.ErrUnexpectedEOF
 				}
 				break

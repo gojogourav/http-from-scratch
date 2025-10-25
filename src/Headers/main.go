@@ -90,15 +90,16 @@ func (h *Headers) Set(key, value string) {
 	} else {
 		h.headers[name] = value
 	}
+	fmt.Printf("DEBUG: Headers map now contains %d entries:\n", len(h.headers))
+	for k, v := range h.headers {
+		fmt.Printf("  %s: %s\n", k, v)
+	}
+
 }
 
 func (h *Headers) Parse(data []byte) (int, bool, error) {
 	read := 0
 	done := false
-	// fmt.Println("This is data - ", string(data))
-	if len(string(bytes.TrimSpace(data))) == 0 {
-		return 0, true, nil
-	}
 	for {
 		idx := bytes.Index(data[read:], rn)
 		if idx == -1 {
