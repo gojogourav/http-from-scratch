@@ -1,4 +1,4 @@
-package main
+package request
 
 import (
 	"bytes"
@@ -65,7 +65,7 @@ func (r *Request) parseRequestLine(data []byte) (int, *RequestLine, error) {
 	}
 
 	line := string(data[:lineEnd])
-	println(line)
+	// println(line)
 	parts := strings.Split(line, " ")
 	if len(parts) != 3 {
 		return 0, nil, ErrMalformedRequestLine
@@ -77,10 +77,10 @@ func (r *Request) parseRequestLine(data []byte) (int, *RequestLine, error) {
 		HttpVersion:   parts[2],
 	}
 
-	fmt.Println()
-	fmt.Println("THIS IS METHOD  - ", parts[0])
-	fmt.Println("THIS IS REQUEST TARGET - ", parts[1])
-	fmt.Println("THIS IS HTTPVERSION  - ", parts[2])
+	// fmt.Println()
+	// fmt.Println("THIS IS METHOD  - ", parts[0])
+	// fmt.Println("THIS IS REQUEST TARGET - ", parts[1])
+	// fmt.Println("THIS IS HTTPVERSION  - ", parts[2])
 
 	if !(rl.ValidHTTPVersion()) {
 		return 0, nil, fmt.Errorf("unsupported HTTP version: %s", rl.HttpVersion)
@@ -131,14 +131,14 @@ func (r *Request) parse(data []byte) (int, error) {
 			var rl *RequestLine
 			consumedInStep, rl, err = r.parseRequestLine(workingData)
 			if err != nil {
-				println("Error idhar arha hai kyaa")
+				// println("Error idhar arha hai kyaa")
 				return 0, err
 			}
 			if consumedInStep > 0 {
 				r.RequestLine = *rl
 				r.state = StateHeaders
 				consumed += consumedInStep
-				fmt.Println("EOF ENCOUNTERED?1")
+				// fmt.Println("EOF ENCOUNTERED?1")
 
 				continue
 			} //if consumed is 0 then it'll break
@@ -175,30 +175,30 @@ func (r *Request) parse(data []byte) (int, error) {
 			n, done, err := r.Headers.Parse(workingData)
 
 			if err != nil {
-				println("Error idhar arha hai kyaa")
-				println(string(workingData[consumed:]))
+				// println("Error idhar arha hai kyaa")
+				// println(string(workingData[consumed:]))
 				return 0, err
 			}
 			consumedInStep = n
 			if done {
 				r.state = StateBody
 			}
-			fmt.Println("EOF ENCOUNTERED?2 ", consumed+consumedInStep)
+			// fmt.Println("EOF ENCOUNTERED?2 ", consumed+consumedInStep)
 			break
 
 		case StateBody:
 			contentLengthVal := r.Headers.Get("Content-Length")
 			if contentLengthVal == "" || contentLengthVal == "0" || len(contentLengthVal) == 0 {
-				println("IS this executing ??????")
+				// println("IS this executing ??????")
 				r.state = StateDone
 				consumedInStep = 0
 			} else {
 
-				println("ye hua content Length value - ", contentLengthVal)
+				// println("ye hua content Length value - ", contentLengthVal)
 
 				length, err := strconv.Atoi(contentLengthVal)
 				if err != nil {
-					println("Error idhar arha hai kyaa")
+					// println("Error idhar arha hai kyaa")
 
 					return 0, fmt.Errorf("%w : %s", ErrInvalidContentLength, err.Error())
 				}
@@ -211,7 +211,7 @@ func (r *Request) parse(data []byte) (int, error) {
 				} else {
 					consumedInStep = 0
 				}
-				fmt.Println("EOF ENCOUNTERED?3")
+				// fmt.Println("EOF ENCOUNTERED?3")
 			}
 			break
 		}
@@ -225,10 +225,10 @@ func (r *Request) parse(data []byte) (int, error) {
 			break
 		}
 		consumed += consumedInStep
-		println("This is consumed - ", consumed)
+		// println("This is consumed - ", consumed)
 
 	}
-	println("This is consumed - wgdaas;glkajsd", consumed)
+	// println("This is consumed - wgdaas;glkajsd", consumed)
 
 	return consumed, nil
 }
@@ -256,7 +256,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 			buf = buf[consumed:]
 		}
 		if req.state == StateDone {
-			fmt.Printf("Request parsing donee\n")
+			// fmt.Printf("Request parsing donee\n")
 			break
 		}
 
@@ -264,7 +264,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 			if readErr == io.EOF {
 				if req.state != StateDone {
 
-					fmt.Printf("kya mujhe eor error arha hai?  %d\n ", consumed)
+					// fmt.Printf("kya mujhe eor error arha hai?  %d\n ", consumed)
 					return nil, io.ErrUnexpectedEOF
 				}
 				break
@@ -276,7 +276,14 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		//THIS IS SOUL OF OUR PROGRAM
 	}
 
-	fmt.Println(req)
+	println("Requset Line :")
+	fmt.Println("- Method :", req.RequestLine.Method)
+	fmt.Println("- Target :", req.RequestLine.RequestTarget)
+	fmt.Println("- Version :", req.RequestLine.HttpVersion)
+	println("Headers :")
+	fmt.Println(req.Headers.Display())
+	println("Body :")
+	println(string(req.Body))
 
 	return req, nil
 }

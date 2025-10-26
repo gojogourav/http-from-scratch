@@ -48,20 +48,20 @@ func parseHeaders(fieldLine []byte) (string, string, error) {
 
 	isValid := strings.Contains(string(fieldLine), ":")
 	if !isValid {
-		fmt.Println("The ehader isn't valid ")
-		fmt.Println("This is fieldline - ", string(fieldLine))
+		// fmt.Println("The ehader isn't valid ")
+		// fmt.Println("This is fieldline - ", string(fieldLine))
 		return "", "", MalformedHeader
 	}
 	parts := bytes.SplitN(fieldLine, []byte(":"), 2)
 	if len(parts) != 2 {
-		fmt.Println("The ehader doesn't have two parts")
+		// fmt.Println("The ehader doesn't have two parts")
 		return "", "", MalformedHeader
 	}
 	key := parts[0]
 	value := bytes.TrimSpace(parts[1])
-	fmt.Printf("THIS IS AFTER TRIMMING - %s\n", value)
+	// fmt.Printf("THIS IS AFTER TRIMMING - %s\n", value)
 	if !IsValidToken(string(key)) {
-		fmt.Println("The tokens aren't valid")
+		// fmt.Println("The tokens aren't valid")
 		return "", "", MalformedHeader
 	}
 
@@ -84,17 +84,23 @@ func (h *Headers) Get(key string) string {
 }
 func (h *Headers) Set(key, value string) {
 	name := strings.ToLower(key)
-	fmt.Printf("THE KEY ENCOUNTERED IS - %s\n", name)
+	// fmt.Printf("THE KEY ENCOUNTERED IS - %s\n", name)
 	if v, ok := h.headers[name]; ok {
 		h.headers[name] = fmt.Sprintf("%s, %s", v, value)
 	} else {
 		h.headers[name] = value
 	}
-	fmt.Printf("DEBUG: Headers map now contains %d entries:\n", len(h.headers))
-	for k, v := range h.headers {
-		fmt.Printf("  %s: %s\n", k, v)
-	}
+	// fmt.Printf("DEBUG: Headers map now contains %d entries:\n", len(h.headers))
+	// for k, v := range h.headers {
+	// 	fmt.Printf("  %s: %s\n", k, v)
+	// }
 
+}
+func (h *Headers) Display() string {
+	for k, v := range h.headers {
+		return fmt.Sprintf("%s: %s\n", k, v)
+	}
+	return ""
 }
 
 func (h *Headers) Parse(data []byte) (int, bool, error) {
@@ -116,7 +122,7 @@ func (h *Headers) Parse(data []byte) (int, bool, error) {
 		key, value, err := parseHeaders(line)
 		key = string(bytes.TrimSpace([]byte(key)))
 		if err != nil {
-			println("error idhar h kya")
+			// println("error idhar h kya")
 			return 0, false, err
 		}
 
@@ -125,4 +131,10 @@ func (h *Headers) Parse(data []byte) (int, bool, error) {
 
 	}
 	return read, done, nil
+}
+
+func (h *Headers) ForEach(f func(key, value string)) {
+	for k, v := range h.headers {
+		f(k, v)
+	}
 }
