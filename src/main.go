@@ -83,6 +83,31 @@ func main() {
 				StatusCode: response.StatusOk,
 				Message:    "Chunked httpbin stream sent",
 			}
+		case "/video":
+			f, err := os.ReadFile("assets/vim.mp4")
+			if err != nil {
+				log.Println("Error reading asset file:", err)
+				return &server.HandlerBody{
+					StatusCode: response.StatusInternalServerError,
+					Message:    "Failed to read asset",
+				}
+			}
+
+			headers.Delete("Content-Type") // remove text/plain
+			headers.Set("Content-Type", "video/mp4")
+			headers.Set("Content-Length", fmt.Sprintf("%d", len(f)))
+			headers.Set("Connection", "close")
+
+			w.WriteStatusLine(response.StatusOk)
+			w.WriteHeaders(headers)
+
+			w.WriteBody(f)
+
+			return &server.HandlerBody{
+				StatusCode: response.StatusOk,
+				Message:    "Video served successfully",
+			}
+
 		default:
 			body := []byte(`
 <html>

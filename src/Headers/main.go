@@ -88,22 +88,17 @@ func (h *Headers) Get(key string) string {
 }
 func (h *Headers) Set(key, value string) {
 	name := strings.ToLower(key)
-	if name == "content-length" {
+	if name == "content-length" || name == "content-type" {
 		h.headers[name] = value
 	} else {
-		// fmt.Printf("THE KEY ENCOUNTERED IS - %s\n", name)
 		if v, ok := h.headers[name]; ok {
 			h.headers[name] = fmt.Sprintf("%s, %s", v, value)
 		} else {
 			h.headers[name] = value
 		}
-		// fmt.Printf("DEBUG: Headers map now contains %d entries:\n", len(h.headers))
-		// for k, v := range h.headers {
-		// 	fmt.Printf("  %s: %s\n", k, v)
-		// }
 	}
-
 }
+
 func (h *Headers) Display() string {
 	for k, v := range h.headers {
 		return fmt.Sprintf("%s: %s\n", k, v)
