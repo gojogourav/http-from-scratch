@@ -22,6 +22,10 @@ var (
 	MalformedHeader = fmt.Errorf("Error Malformed Headers")
 )
 
+func (h *Headers) Delete(key string) {
+	delete(h.headers, key)
+}
+
 func IsValidToken(str string) bool {
 	//     Uppercase letters: A-Z
 	//     Lowercase letters: a-z

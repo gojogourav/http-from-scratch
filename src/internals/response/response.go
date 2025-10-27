@@ -4,6 +4,7 @@ import (
 	"fmt"
 	headers "github/gojogourav/http-from-scratch/Headers"
 	"io"
+	"net/http"
 )
 
 type StatusCode int
@@ -16,6 +17,47 @@ type Response struct {
 
 type Writer struct {
 	io.Writer
+	Headers *headers.Headers
+}
+
+func ProxyHTTPinStream(w io.Writer, count int) error {
+	url := fmt.Sprintf("https://httpbin.org/stream/%d", count)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to fetch httpbin: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = fmt.Fprint(w,
+		"HTTP/1.1 200 OK\r\n"+
+			"Content-Type: application/json\r\n"+
+			"Transfer-Encoding: chunked\r\n"+
+			"Connection: close\r\n\r\n")
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, 1024)
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			chunk := fmt.Sprintf("%x\r\n%s\r\n", n, buf[:n])
+			if _, werr := w.Write([]byte(chunk)); werr != nil {
+				return werr
+			}
+		}
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("read error: %w", err)
+		}
+	}
+
+	_, err = fmt.Fprint(w, "0\r\n\r\n")
+	return err
 }
 
 const (
