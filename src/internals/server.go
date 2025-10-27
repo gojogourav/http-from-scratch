@@ -13,15 +13,20 @@ type Server struct {
 	Closed  bool
 	Handler Handler
 }
-type HandlerError struct {
+type HandlerBody struct {
 	StatusCode response.StatusCode
 	Message    string
 }
 
-type Handler func(w io.Writer, req *request.Request) *HandlerError
+type Handler func(w *response.Writer, req *request.Request) *HandlerBody
 
 func runConnection(s *Server, conn io.ReadWriteCloser) {
 	defer conn.Close()
+
+	w := &response.Writer{
+		Writer: conn,
+	}
+
 	if s.Closed {
 		return
 	}
@@ -29,27 +34,28 @@ func runConnection(s *Server, conn io.ReadWriteCloser) {
 
 	r, err := request.RequestFromReader(conn)
 	if err != nil {
-		response.WriteStatusLine(conn, response.StatusBadRequest)
-		response.WriteHeaders(conn, headers)
+		w.WriteStatusLine(response.StatusBadRequest)
+		w.WriteHeaders(headers)
 		return
 	}
 
 	writer := bytes.NewBuffer([]byte{})
-	handlerError := s.Handler(writer, r)
+	handlerBody := s.Handler(w, r)
 
-	if handlerError != nil {
+	var body []byte = nil
+	var status response.StatusCode = response.StatusOk
+	if handlerBody != nil {
+		status = handlerBody.StatusCode
+		body = []byte(handlerBody.Message)
 
-		response.WriteStatusLine(conn, handlerError.StatusCode)
-		response.WriteHeaders(conn, headers)
-		conn.Write([]byte(handlerError.Message))
-		return
+	} else {
+		status = response.StatusOk
+		body = writer.Bytes()
 	}
 
-	body := writer.Bytes()
-	headers.Set("Content-Length", fmt.Sprintf("%d", body))
-
-	response.WriteStatusLine(conn, response.StatusOk)
-	response.WriteHeaders(conn, headers)
+	headers.Set("Content-Length", fmt.Sprintf("%d", len(body)))
+	w.WriteStatusLine(status)
+	w.WriteHeaders(headers)
 	conn.Write(body)
 }
 
